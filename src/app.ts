@@ -1,12 +1,12 @@
-const express = require('express')
+import profileRouter from './routes/profiles/profiles'
+import express from 'express'
+
 const app = express()
-const router = express.Router()
 
 const port = 3000
-
-app.get('/', (req: any, res: any) => {
-    res.send('Hello World')
-})
+app.use(express.json())
+app.use(express.urlencoded({ extended: true }))
+app.use('/profiles', profileRouter)
 
 app.listen(port, () => {
     console.log('server started')
