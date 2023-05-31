@@ -1,9 +1,17 @@
 import express from 'express'
+
+import {
+    createUser,
+    getProtectedProfile,
+    getUsers,
+    userLogin,
+} from '../../controllers/profiles'
+import passport from 'passport'
+
 const router = express.Router()
 
-import { createUser, getUsers } from '../../controllers/profile'
+router.post('/register', createUser)
 
-router.get('/', getUsers)
-router.post('/', createUser)
+router.post('/login', passport.authenticate('local'), userLogin)
 
 export default router
