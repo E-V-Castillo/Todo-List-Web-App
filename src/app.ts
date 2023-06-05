@@ -1,6 +1,7 @@
 import session from 'express-session'
 import pgSession from 'connect-pg-simple'
 import express from 'express'
+import dotenv from 'dotenv'
 
 import passport from 'passport'
 import { profileModel } from './models/profile'
@@ -14,6 +15,8 @@ import profileRouter from './routes/profiles/index'
 import indexRouter from './routes/index'
 import { isAuthenticated } from './middleware/isAuthenticated'
 
+dotenv.config()
+
 const app = express()
 
 const pgSessionStore = new (pgSession(session))({
@@ -25,7 +28,7 @@ app.use(express.urlencoded({ extended: true }))
 
 app.use(
     session({
-        secret: 'supersecretkey',
+        secret: process.env.SESSION_SECRET!,
         saveUninitialized: false,
         resave: false,
         store: pgSessionStore,
