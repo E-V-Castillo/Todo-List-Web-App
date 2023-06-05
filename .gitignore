@@ -5,3 +5,8 @@ dist/
 .env
 
 .env.*
+
+dist/app.js
+
+dist/routes/
+dist/services/

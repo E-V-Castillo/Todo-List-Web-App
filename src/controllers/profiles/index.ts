@@ -1,5 +1,16 @@
 import { Request, Response } from 'express'
-import { profileModel } from '../../models/Profile'
+import { profileModel } from '../../models/profile/index'
+
+export const createUser = async (req: Request, res: Response) => {
+    try {
+        const { email, username, password } = req.body
+        await profileModel.createProfile({ email, username, password })
+        res.status(201).send('User Created')
+    } catch (error) {
+        console.error('Error in createUser', error)
+        res.status(409).send('User account already exists. ')
+    }
+}
 
 export const getUsers = async (req: Request, res: Response) => {
     try {
@@ -19,16 +30,20 @@ export const getProtectedProfile = async (req: Request, res: Response) => {
         const user = await profileModel.getProfileById(id)
         res.status(200).json(user)
     } catch (error) {
-        console.log(error)
+        console.error('Error in getProtectedProfile function', error)
+        res.status(401).send('Not logged in')
     }
-}
-
-export const createUser = async (req: Request, res: Response) => {
-    const { email, username, password } = req.body
-    await profileModel.createProfile({ email, username, password })
-    res.send('User Created')
 }
 
 export const userLogin = async (req: Request, res: Response) => {
     res.send('hello login')
+}
+
+export const viewProfile = (req: Request, res: Response) => {
+    if (req.isAuthenticated()) {
+        res.send(req.user)
+    } else {
+        res.send('Not authenticated')
+        res.end
+    }
 }

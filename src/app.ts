@@ -1,13 +1,18 @@
 import session from 'express-session'
 import pgSession from 'connect-pg-simple'
-import profileRouter from './routes/profiles/profiles'
-import indexRouter from './routes/index'
-
 import express from 'express'
-import pool from './config/database'
+
 import passport from 'passport'
-import { profileModel } from './models/Profile'
+import { profileModel } from './models/profile'
 import { Strategy as LocalStrategy } from 'passport-local'
+
+import pool from './config/database'
+
+import taskRouter from './routes/tasks/index'
+import categoryRouter from './routes/categories/index'
+import profileRouter from './routes/profiles/index'
+import indexRouter from './routes/index'
+import { isAuthenticated } from './middleware/isAuthenticated'
 
 const app = express()
 
@@ -21,10 +26,10 @@ app.use(express.urlencoded({ extended: true }))
 app.use(
     session({
         secret: 'supersecretkey',
-        saveUninitialized: true,
+        saveUninitialized: false,
         resave: false,
         store: pgSessionStore,
-        cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 },
+        cookie: { maxAge: 1000 * 60 * 60 },
     })
 )
 
@@ -32,10 +37,10 @@ app.use(passport.initialize())
 app.use(passport.session())
 
 passport.use(
-    new LocalStrategy(async (username, password, done) => {
-        const user = await profileModel.getProfileByName(username)
+    new LocalStrategy(async (email, password, done) => {
+        const user = await profileModel.getProfileByEmail(email)
         if (!user) {
-            console.log('No User found with the name ' + username)
+            console.log('No User found with the email ' + email)
             return done(null, false)
         }
         if (user.password != password) {
@@ -67,6 +72,8 @@ passport.deserializeUser(async (id: string, done) => {
     }
 })
 
+app.use('/tasks', isAuthenticated, taskRouter)
+app.use('/categories', isAuthenticated, categoryRouter)
 app.use('/profiles', profileRouter)
 app.use('/', indexRouter)
 
