@@ -36,7 +36,12 @@ export const getProtectedProfile = async (req: Request, res: Response) => {
 }
 
 export const userLogin = async (req: Request, res: Response) => {
-    res.send('hello login')
+    if (req.user) {
+        const { password, profile_id, ...user } = req.user
+        res.status(200).json(user)
+    } else {
+        res.status(401).json({ Error: 'User is not logged in' })
+    }
 }
 
 export const viewProfile = (req: Request, res: Response) => {
