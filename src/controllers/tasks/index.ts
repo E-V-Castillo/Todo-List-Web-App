@@ -4,14 +4,8 @@ import taskModel from '../../models/task'
 export const createTask = async (req: Request, res: Response) => {
     // This stuff will come from a payload from my frontend
     try {
-        const {
-            title,
-            description,
-            deadline,
-            is_completed,
-            is_notified,
-            task_priority_id,
-        } = req.body
+        const { title, description, deadline, is_notified, task_priority_id } =
+            req.body
 
         if (req.user?.profile_id) {
             const profile_id = req.user.profile_id
@@ -19,15 +13,14 @@ export const createTask = async (req: Request, res: Response) => {
                 title,
                 description,
                 deadline,
-                is_completed,
                 is_notified,
                 task_priority_id,
                 profile_id,
             })
-            res.status(201).json({ result })
+            res.status(201).json(result)
         }
     } catch (error) {
-        res.status(500).send('Error creating a task')
+        res.status(500).json({ Error: 'Error creating a task' })
     }
 }
 

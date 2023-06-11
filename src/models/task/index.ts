@@ -7,7 +7,6 @@ export class TaskModel {
         title,
         description,
         deadline,
-        is_completed,
         is_notified,
         profile_id,
         task_priority_id,
@@ -16,9 +15,9 @@ export class TaskModel {
         try {
             client = await pool.connect()
             const query = `INSERT INTO task (
-                title, description, deadline, is_completed, is_notified, profile_id, task_priority_id
+                title, description, deadline, is_notified, profile_id, task_priority_id
             ) VALUES (
-                $1, $2, $3, $4, $5, $6, $7
+                $1, $2, $3, $4, $5, $6
             ) RETURNING 
                 task_id, title, description, deadline,
                 is_completed, is_notified, created_at,
@@ -28,7 +27,6 @@ export class TaskModel {
                 title,
                 description,
                 deadline,
-                is_completed,
                 is_notified,
                 profile_id,
                 task_priority_id,
