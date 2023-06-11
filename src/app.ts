@@ -2,6 +2,7 @@ import session from 'express-session'
 import pgSession from 'connect-pg-simple'
 import express from 'express'
 import dotenv from 'dotenv'
+import cors, { CorsOptions } from 'cors'
 
 import passport from 'passport'
 import { profileModel } from './models/profile'
@@ -23,6 +24,14 @@ const pgSessionStore = new (pgSession(session))({
     pool: pool,
 })
 
+const corsOptions: CorsOptions = {
+    allowedHeaders: ['Authorization', 'Content-Type'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+    origin: 'http://localhost:5173',
+    credentials: true,
+}
+app.use(cors(corsOptions))
+
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
@@ -40,22 +49,25 @@ app.use(passport.initialize())
 app.use(passport.session())
 
 passport.use(
-    new LocalStrategy(async (email, password, done) => {
-        const user = await profileModel.getProfileByEmail(email)
-        if (!user) {
-            console.log('No User found with the email ' + email)
-            return done(null, false)
-        }
-        if (user.password != password) {
-            console.log('user found')
+    new LocalStrategy(
+        { usernameField: 'email' },
+        async (email, password, done) => {
+            const user = await profileModel.getProfileByEmail(email)
+            if (!user) {
+                console.log('No User found with the email ' + email)
+                return done(null, false)
+            }
+            if (user.password != password) {
+                console.log('user found')
 
-            return done(null, false)
-        }
-        console.log('Authentication successful for user')
-        console.log(user)
+                return done(null, false)
+            }
+            console.log('Authentication successful for user')
+            console.log(user)
 
-        return done(null, user)
-    })
+            return done(null, user)
+        }
+    )
 )
 
 passport.serializeUser((user: any, done) => {
