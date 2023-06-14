@@ -1,5 +1,6 @@
 import { Request, Response } from 'express'
 import taskModel from '../../models/task'
+import { TaskFilter } from '../../types/task.interface'
 
 export const createTask = async (req: Request, res: Response) => {
     // This stuff will come from a payload from my frontend
@@ -35,6 +36,43 @@ export const readTasks = async (req: Request, res: Response) => {
             res.status(401).json({ Error: 'You are not logged in' })
         }
     } catch (error) {}
+}
+
+export const filteredTask = async (req: Request, res: Response) => {
+    try {
+        if (req.user?.profile_id != undefined) {
+            const { completed, title, priority, startDate, endDate } = req.query
+
+            // req.query only returns undefined, SQL does not have a definition for undefined so we need to change the type into null or as the value that sql can understand like boolean or string
+
+            const filters: TaskFilter = {
+                completedQuery:
+                    completed === undefined ? null : completed === 'true',
+                titleQuery: title === undefined ? null : (title as string),
+                priorityQuery:
+                    priority === undefined
+                        ? null
+                        : parseInt(priority as string),
+                startDateQuery:
+                    startDate === undefined
+                        ? null
+                        : new Date(startDate as string),
+                endDateQuery:
+                    endDate === undefined ? null : new Date(endDate as string),
+            }
+
+            console.log(filters)
+
+            const result = await taskModel.readTaskWithFilter(
+                req.user.profile_id,
+                filters
+            )
+            res.status(200).json(result)
+        }
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({ Error: 'Internal Server Error' })
+    }
 }
 
 export const deleteTask = async (req: Request, res: Response) => {

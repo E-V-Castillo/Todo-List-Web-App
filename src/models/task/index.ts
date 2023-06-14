@@ -1,4 +1,5 @@
 import pool from '../../config/database'
+import { TaskFilter } from '../../types/task.interface'
 import { doesTaskExist } from './utils/doesTaskExist'
 
 export class TaskModel {
@@ -53,6 +54,58 @@ export class TaskModel {
             return result.rows
         } catch (error) {
             console.error('Error while using readAllTaskFromUser', error)
+            throw error
+        } finally {
+            client?.release()
+        }
+    }
+
+    async readTaskWithFilter(
+        profile_id: number,
+        {
+            completedQuery,
+            priorityQuery,
+            titleQuery,
+            endDateQuery,
+            startDateQuery,
+        }: TaskFilter
+    ) {
+        let client
+        try {
+            client = await pool.connect()
+            const query = `
+            SELECT 
+            task_id,
+            title, 
+            description, 
+            deadline, 
+            is_completed, 
+            is_notified, 
+            created_at,
+            task_priority_id, 
+            completed_at 
+            FROM task 
+            WHERE 
+            profile_id = $1 
+            AND ($2::boolean IS NULL OR is_completed = $2)
+            AND ($3::integer IS NULL OR task_priority_id = $3)
+            AND ($4::varchar(300) IS NULL OR title = $4)
+            AND (($5::timestamp IS NULL OR $6::timestamp IS NULL) 
+                                OR  deadline BETWEEN $5 AND $6 )`
+            console.log('Executing query')
+
+            const values = [
+                profile_id,
+                completedQuery,
+                priorityQuery,
+                titleQuery,
+                startDateQuery,
+                endDateQuery,
+            ]
+            const result = await client.query(query, values)
+
+            return result.rows
+        } catch (error) {
             throw error
         } finally {
             client?.release()
