@@ -1,12 +1,9 @@
 import { Request, Response } from 'express'
 import { categoryModel } from '../../models/category/index'
+import { CustomError } from '../../types/errors/CustomError'
 
 export const createCategory = async (req: Request, res: Response) => {
     try {
-        if (!req.isAuthenticated()) {
-            return res.status(401).json({ error: 'Unauthorized' })
-        }
-
         const { name } = req.body
         if (!name) {
             return res.status(400).json({ error: 'Category name is required' })
