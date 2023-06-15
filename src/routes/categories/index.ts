@@ -12,8 +12,8 @@ router.post('/new', createCategory)
 
 router.get('/', readAllCategories)
 
-router.patch('/update/:category_id', updateCategory)
+router.patch('/:category_id', updateCategory)
 
-router.delete('/delete/:category_id', deleteCategory)
+router.delete('/:category_id', deleteCategory)
 
 export default router
