@@ -14,7 +14,8 @@
         "express-session": "^1.17.3",
         "passport": "^0.6.0",
         "passport-local": "^1.0.0",
-        "pg": "^8.11.0"
+        "pg": "^8.11.0",
+        "zod": "^3.21.4"
     },
     "devDependencies": {
         "@types/connect-pg-simple": "^7.0.0",
