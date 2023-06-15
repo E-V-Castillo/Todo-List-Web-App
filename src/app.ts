@@ -15,6 +15,7 @@ import categoryRouter from './routes/categories/index'
 import profileRouter from './routes/profiles/index'
 import indexRouter from './routes/index'
 import { isAuthenticated } from './middleware/isAuthenticated'
+import { handleError } from './middleware/handleError'
 
 dotenv.config()
 
@@ -48,19 +49,19 @@ app.use(
 app.use(passport.initialize())
 app.use(passport.session())
 
+// I hate passport
 passport.use(
     new LocalStrategy(
         { usernameField: 'email' },
         async (email, password, done) => {
             const user = await profileModel.getProfileByEmail(email)
             if (!user) {
-                console.log('No User found with the email ' + email)
-                return done(null, false)
+                return done(null, false, {
+                    message: 'Failed to find user with email',
+                })
             }
             if (user.password != password) {
-                console.log('user found')
-
-                return done(null, false)
+                return done(null, false, { message: 'Invalid password' })
             }
             console.log('Authentication successful for user')
             console.log(user)
@@ -91,6 +92,7 @@ app.use('/tasks', isAuthenticated, taskRouter)
 app.use('/categories', isAuthenticated, categoryRouter)
 app.use('/profiles', profileRouter)
 app.use('/', indexRouter)
+app.use(handleError)
 
 const port = 3000
 app.listen(port, () => {
