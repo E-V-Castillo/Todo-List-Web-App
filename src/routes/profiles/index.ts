@@ -8,6 +8,7 @@ import {
     viewProfile,
 } from '../../controllers/profiles'
 import passport from 'passport'
+import { isAuthenticated } from '../../middleware/isAuthenticated'
 
 const router = express.Router()
 
@@ -15,6 +16,6 @@ router.post('/register', createUser)
 
 router.post('/login', passport.authenticate('local'), userLogin)
 
-router.get('/', passport.authorize('local'), viewProfile)
+router.get('/', isAuthenticated, viewProfile)
 
 export default router
