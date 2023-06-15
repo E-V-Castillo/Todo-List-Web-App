@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express'
 import { profileModel } from '../../models/profile/index'
 import { CustomError } from '../../types/errors/CustomError'
+import { z } from 'zod'
 
 export const createUser = async (
     req: Request,
@@ -27,29 +28,6 @@ export const createUser = async (
                 )
             )
         }
-    }
-}
-
-export const getUsers = async (req: Request, res: Response) => {
-    try {
-        const users = await profileModel.getAllProfiles()
-        res.status(200).json(users)
-    } catch (error) {
-        console.error('Error in finding all users in database', error)
-        res.status(500).json({ error: 'Internal Server Error' })
-    }
-}
-
-export const getProtectedProfile = async (req: Request, res: Response) => {
-    console.log('in my controller')
-    try {
-        const { stringId } = req.params
-        const id = parseInt(stringId)
-        const user = await profileModel.getProfileById(id)
-        res.status(200).json(user)
-    } catch (error) {
-        console.error('Error in getProtectedProfile function', error)
-        res.status(401).send('Not logged in')
     }
 }
 
