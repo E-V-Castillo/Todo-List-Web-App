@@ -62,7 +62,7 @@ class CategoryModel {
         let client
         try {
             client = await pool.connect()
-            if (await this.categoryExists(name, profile_id, client)) {
+            if (await this.categoryExistsByName(name, profile_id, client)) {
                 throw new CustomError(
                     400,
                     `Category with name: ${name} already exists`,
@@ -113,7 +113,9 @@ class CategoryModel {
         try {
             client = await pool.connect()
 
-            if (await doesCategoryExist(category_id, profile_id, client)) {
+            if (
+                await this.categoryExistsById(category_id, profile_id, client)
+            ) {
                 const query =
                     'UPDATE category SET name = $1 WHERE category_id = $2 AND profile_id = $3 RETURNING name, category_id'
                 const values = [name, category_id, profile_id]
@@ -124,13 +126,25 @@ class CategoryModel {
                 return rows
             } else {
                 throw new CustomError(
-                    400,
-                    'Category does not exist for that user'
+                    403,
+                    'Unauthorized Access',
+                    new Error(
+                        'User tried to access a category that did not belong to them'
+                    )
                 )
             }
         } catch (error) {
-            console.error('Error in updating a category', error)
-            throw error
+            if (error instanceof CustomError) {
+                throw error
+            } else if (error instanceof Error) {
+                throw new CustomError(500, 'Internal Server Error', error)
+            } else {
+                throw new CustomError(
+                    500,
+                    'Internal Server Error',
+                    new Error('Unaccounted Error Occurred')
+                )
+            }
         } finally {
             client?.release()
         }
@@ -141,17 +155,34 @@ class CategoryModel {
         let client
         try {
             client = await pool.connect()
-            if (await doesCategoryExist(category_id, profile_id, client)) {
+            if (
+                await this.categoryExistsById(category_id, profile_id, client)
+            ) {
                 const query =
                     'DELETE FROM category WHERE category_id = $1 AND profile_id = $2'
                 const values = [category_id, profile_id]
                 await client.query(query, values)
             } else {
-                throw new Error('Category does not exist for that user')
+                throw new CustomError(
+                    403,
+                    'Unauthorized Access',
+                    new Error(
+                        'User tried to access a category that did not belong to them'
+                    )
+                )
             }
         } catch (error) {
-            console.error('Error in deleting a category', error)
-            throw error
+            if (error instanceof CustomError) {
+                throw error
+            } else if (error instanceof Error) {
+                throw new CustomError(500, 'Internal Server Error', error)
+            } else {
+                throw new CustomError(
+                    500,
+                    'Internal Server Error',
+                    new Error('Unaccounted Error Occurred')
+                )
+            }
         } finally {
             client?.release()
         }
