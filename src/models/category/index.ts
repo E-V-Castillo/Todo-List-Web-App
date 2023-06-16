@@ -1,20 +1,87 @@
+import { Client, PoolClient } from 'pg'
 import pool from '../../config/database'
+import { CustomError } from '../../types/errors/CustomError'
 import { doesCategoryExist } from './utils/doesCategoryExist'
 
 class CategoryModel {
+    private async categoryExistsById(
+        category_id: number,
+        profile_id: number,
+        client: PoolClient
+    ) {
+        try {
+            const query =
+                'SELECT COUNT(*) FROM category WHERE category_id = $1 AND profile_id = $2'
+            const values = [category_id, profile_id]
+            const result = await client.query(query, values)
+
+            if (result.rows[0].count >= 1) {
+                return true
+            } else {
+                return false
+            }
+        } catch (error) {
+            if (error instanceof Error) {
+                throw new CustomError(500, 'Internal Server Error', error)
+            }
+        }
+    }
+
+    private async categoryExistsByName(
+        name: string,
+        profile_id: number,
+        client: PoolClient
+    ) {
+        try {
+            const query =
+                'SELECT COUNT(*) FROM category WHERE name = $1 AND profile_id = $2'
+            const values = [name, profile_id]
+            const result = await client.query(query, values)
+            console.log(result.rowCount)
+            console.log(result.rows[0].count)
+
+            if (result.rows[0].count >= 1) {
+                return true
+            } else {
+                return false
+            }
+        } catch (error) {
+            if (error instanceof Error) {
+                throw new CustomError(500, 'Internal Server Error', error)
+            }
+        }
+    }
     // Create
-    async createCategory({ name, profile_id }: CategoryInterface) {
+    async createCategory({
+        name,
+        profile_id,
+    }: {
+        name: string
+        profile_id: number
+    }) {
         let client
         try {
             client = await pool.connect()
+            if (await this.categoryExists(name, profile_id, client)) {
+                throw new CustomError(
+                    400,
+                    `Category with name: ${name} already exists`,
+                    new Error('Category already exists')
+                )
+            }
             const query =
                 'INSERT INTO category (name, profile_id) VALUES ($1, $2) RETURNING name, category_id'
             const values = [name, profile_id]
 
-            await client.query(query, values)
+            const result = await client.query(query, values)
+            const row = result.rows[0]
+            return row
         } catch (error) {
-            console.error('Error in creating a category', error)
-            throw error
+            if (error instanceof CustomError) {
+                throw error
+            } else if (error instanceof Error) {
+                throw new CustomError(500, 'Internal Server Error', error)
+            }
         } finally {
             client?.release()
         }
@@ -30,8 +97,7 @@ class CategoryModel {
             const { rows } = await client.query(query, values)
             return rows
         } catch (error) {
-            console.error('Error in creating a category', error)
-            throw error
+            throw new CustomError(500, 'Internal Server Error', error as Error)
         } finally {
             client?.release()
         }
@@ -39,7 +105,7 @@ class CategoryModel {
 
     //Update
     async updateCategory(
-        name: string,
+        newName: string,
         category_id: number,
         profile_id: number
     ) {
@@ -57,7 +123,10 @@ class CategoryModel {
                 )
                 return rows
             } else {
-                throw new Error('Category does not exist for that user')
+                throw new CustomError(
+                    400,
+                    'Category does not exist for that user'
+                )
             }
         } catch (error) {
             console.error('Error in updating a category', error)
