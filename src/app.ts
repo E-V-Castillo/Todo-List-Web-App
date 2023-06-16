@@ -15,7 +15,8 @@ import categoryRouter from './routes/categories/index'
 import profileRouter from './routes/profiles/index'
 import indexRouter from './routes/index'
 import { isAuthenticated } from './middleware/isAuthenticated'
-import { handleError } from './middleware/handleError'
+import { handleRuntimeError } from './middleware/handleRuntimeError'
+import { handleServerError } from './middleware/handleServerError'
 
 dotenv.config()
 
@@ -92,7 +93,8 @@ app.use('/tasks', isAuthenticated, taskRouter)
 app.use('/categories', isAuthenticated, categoryRouter)
 app.use('/profiles', profileRouter)
 app.use('/', indexRouter)
-app.use(handleError)
+app.use(handleRuntimeError)
+app.use(handleServerError)
 
 const port = 3000
 app.listen(port, () => {
