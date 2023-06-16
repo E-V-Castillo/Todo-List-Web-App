@@ -26,12 +26,6 @@ interface TaskPriorityInterface {
     priority: priority
 }
 
-interface CategoryInterface {
-    category_id?: number
-    name: string
-    profile_id: number
-}
-
 interface AttachmentInterface {
     attachment_id: number
     task_id: number
