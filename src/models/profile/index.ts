@@ -10,7 +10,7 @@ class ProfileModel {
             const query = `SELECT COUNT(*) FROM profile WHERE email = $1`
             const values = [email]
             const result = await client.query(query, values)
-            if (result.rowCount === 1) {
+            if (result.rows[0].count >= 1) {
                 return true
             } else {
                 return false
