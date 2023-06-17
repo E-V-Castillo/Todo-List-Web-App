@@ -49,6 +49,8 @@ export const createCategory = async (
 ) => {
     try {
         const category: CreateCategoryType = req.body
+
+        // Use zod parse to validate input
         CreateCategorySchema.parse(category)
         const name = category.name
 
@@ -71,8 +73,9 @@ export const createCategory = async (
             next(error)
         } else if (error instanceof CustomError) {
             next(error)
+        } else if (error instanceof Error) {
+            next(new CustomError(500, 'Internal Server Error', error))
         } else {
-            console.log(error)
             next(
                 new CustomError(
                     400,
@@ -122,7 +125,7 @@ export const updateCategory = async (
             const profile_id = req.user?.profile_id
             const category_id = parseInt(req.params.category_id)
             const { newName } = req.body
-
+            // Use zod parse to validate input
             UpdateCategorySchema.parse({ category_id, newName })
 
             const result = await categoryModel.updateCategory(
@@ -167,6 +170,7 @@ export const deleteCategory = async (
         if (req.user?.profile_id != undefined) {
             const profile_id = req.user.profile_id
             const category_id = parseInt(req.params.category_id)
+            // Use zod parse to validate input
             DeleteCategorySchema.parse({ category_id })
 
             await categoryModel.deleteCategoryWithId(category_id, profile_id)
