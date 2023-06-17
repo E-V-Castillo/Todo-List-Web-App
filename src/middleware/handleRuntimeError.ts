@@ -1,10 +1,8 @@
 import { Response, Request, ErrorRequestHandler, NextFunction } from 'express'
 import { ZodError } from 'zod'
 
-import { ValidationError, isValidationErrorLike } from 'zod-validation-error'
-
 export const handleRuntimeError = async (
-    error: ValidationError,
+    error: ZodError,
     req: Request,
     res: Response,
     next: NextFunction
