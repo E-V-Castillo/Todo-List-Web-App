@@ -38,7 +38,7 @@ class ProfileModel {
                 try {
                     const result = await client.query(query, params)
                     const rows = result.rows
-                    return rows
+                    return rows[0]
                 } catch (error) {
                     if (error instanceof CustomError) {
                         throw error

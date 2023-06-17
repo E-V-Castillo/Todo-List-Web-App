@@ -1,12 +1,6 @@
 import express from 'express'
 
-import {
-    createUser,
-    getProtectedProfile,
-    getUsers,
-    userLogin,
-    viewProfile,
-} from '../../controllers/profiles'
+import { createUser, userLogin, viewProfile } from '../../controllers/profiles'
 import passport from 'passport'
 import { isAuthenticated } from '../../middleware/isAuthenticated'
 
