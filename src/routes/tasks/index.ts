@@ -11,9 +11,7 @@ const router = express.Router()
 
 router.post('/new', createTask)
 
-router.get('/', readTasks)
-
-router.get('/filter', filteredTask)
+router.get('/', filteredTask)
 
 router.delete('/delete/:task_id', deleteTask)
 
