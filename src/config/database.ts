@@ -1,22 +1,31 @@
-import { Pool } from 'pg'
+import { ClientConfig, Pool } from 'pg'
 import dotenv from 'dotenv'
 
 dotenv.config()
 
-const {
-    DATABASE_HOST,
-    DATABASE_NAME,
-    DATABASE_PASSWORD,
-    DATABASE_PORT,
-    DATABASE_USER,
-} = process.env
+let dbConfig
+const environment = process.env.ENVIRONMENT
 
-const pool = new Pool({
-    host: DATABASE_HOST,
-    database: DATABASE_NAME,
-    password: DATABASE_PASSWORD,
-    port: parseInt(DATABASE_PORT!),
-    user: DATABASE_USER,
-})
+if (environment === 'development') {
+    console.log('SERVER RUNNING IN DEVELOPMENT MODE')
+
+    dbConfig = {
+        host: process.env.DEV_DATABASE_HOST,
+        database: process.env.DEV_DATABASE_NAME,
+        password: process.env.DEV_DATABASE_PASSWORD,
+        port: parseInt(process.env.DEV_DATABASE_PORT!),
+        user: process.env.DEV_DATABASE_USER,
+    }
+} else if (environment === 'testing') {
+    console.log('SERVER RUNNING IN TESTING MODE')
+    dbConfig = {
+        host: process.env.TEST_DATABASE_HOST,
+        database: process.env.TEST_DATABASE_NAME,
+        password: process.env.TEST_DATABASE_PASSWORD,
+        port: parseInt(process.env.TEST_DATABASE_PORT!),
+        user: process.env.TEST_DATABASE_USER,
+    }
+}
+const pool = new Pool(dbConfig)
 
 export default pool
