@@ -17,6 +17,7 @@ import indexRouter from './routes/index'
 import { isAuthenticated } from './middleware/isAuthenticated'
 import { handleRuntimeError } from './middleware/handleRuntimeError'
 import { handleServerError } from './middleware/handleServerError'
+import { PassportSchema } from './utils/passportZod'
 
 dotenv.config()
 
@@ -55,19 +56,32 @@ passport.use(
     new LocalStrategy(
         { usernameField: 'email' },
         async (email, password, done) => {
-            const user = await profileModel.getProfileByEmail(email)
-            if (!user) {
-                return done(null, false, {
-                    message: 'Failed to find user with email',
+            try {
+                const schemaResult = PassportSchema.safeParse({
+                    email,
+                    password,
+                })
+                if (!schemaResult.success) {
+                    throw schemaResult.error
+                }
+                const user = await profileModel.getProfileByEmail(email)
+                if (!user) {
+                    return done(null, false, {
+                        message: 'Failed to find user with email',
+                    })
+                }
+                if (user.password != password) {
+                    return done(null, false, { message: 'Invalid password' })
+                }
+                console.log('Authentication successful for user')
+                console.log(user)
+
+                return done(null, user)
+            } catch (error) {
+                return done(error, false, {
+                    message: 'Internal Server Message',
                 })
             }
-            if (user.password != password) {
-                return done(null, false, { message: 'Invalid password' })
-            }
-            console.log('Authentication successful for user')
-            console.log(user)
-
-            return done(null, user)
         }
     )
 )
