@@ -8,7 +8,7 @@ const config = {
     transform: {
         '^.+\\.(ts|tsx)$': 'ts-jest',
     },
-    globalSetup: '/config/jestSetup.js',
-    globalTearDown: '/config/jestTeardown.js',
+    globalTeardown: './dist/src/config/jestTeardown.js',
+    bail: false,
 }
 module.exports = config
