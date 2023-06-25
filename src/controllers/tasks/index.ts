@@ -11,7 +11,7 @@ const errorFactory = new ErrorFactory()
 const CreateTaskSchema = z.object({
     title: z.string().max(300),
     description: z.string().nullish(),
-    deadline: z.coerce.date(),
+    deadline: z.string().datetime(),
     is_notified: z.enum(['true', 'false'], {
         errorMap: (issue, _ctx) => {
             if (issue.code === z.ZodIssueCode.invalid_enum_value) {
@@ -97,21 +97,51 @@ export const createTask = async (
     }
 }
 
-const ReadTaskFiltersSchema = z.object({
-    completed: z.coerce
-        .boolean({ invalid_type_error: 'Completed must be a boolean' })
-        .nullish(),
-    title: z
-        .string()
-        .max(300, { message: 'Title must not be longer than 300 characters' })
-        .min(1, { message: 'Title must not be shorter than 1 character' })
-        .nullish(),
-    priority: z
-        .string({ invalid_type_error: 'Priority must be a string' })
-        .nullish(),
-    startDate: z.coerce.date().nullish(),
-    endDate: z.coerce.date().nullish(),
-})
+// FIX THIS
+
+const ReadTaskFiltersSchema = z
+    .object({
+        completed: z
+            .enum(['true', 'false'], {
+                errorMap: (issue, _ctx) => {
+                    if (issue.code === z.ZodIssueCode.invalid_enum_value) {
+                        if (
+                            issue.received !== 'true' &&
+                            issue.received !== 'false'
+                        ) {
+                            return {
+                                message:
+                                    'Completion state must be a true or false value',
+                            }
+                        }
+                    }
+                    if (issue.code === z.ZodIssueCode.invalid_type) {
+                        if (issue.received !== 'string') {
+                            return {
+                                message:
+                                    'Completion state must be provided in string format',
+                            }
+                        }
+                    }
+
+                    return { message: 'Internal server error' }
+                },
+            })
+            .nullish(),
+        title: z
+            .string()
+            .max(300, {
+                message: 'Title must not be longer than 300 characters',
+            })
+            .min(1, { message: 'Title must not be shorter than 1 character' })
+            .nullish(),
+        priority: z
+            .string({ invalid_type_error: 'Priority must be a string' })
+            .nullish(),
+        startDate: z.coerce.date().nullish(),
+        endDate: z.coerce.date().nullish(),
+    })
+    .optional()
 
 export const readTask = async (
     req: Request,
@@ -133,10 +163,18 @@ export const readTask = async (
             }
 
             // req.query only returns undefined, SQL does not have a definition for undefined so we need to change the type into null or as the value that sql can understand like boolean or string
+            let completedValue
+            if (completed === undefined) {
+                completedValue = null
+            } else if (completed === 'true') {
+                completedValue = true
+            } else if (completed === 'false') {
+                completedValue = false
+            }
 
             const filters: TaskFilter = {
-                completedQuery:
-                    completed === undefined ? null : completed === 'true',
+                completedQuery: completedValue!,
+
                 titleQuery: title === undefined ? null : (title as string),
                 priorityQuery:
                     priority === undefined ? null : (priority as string),
@@ -184,13 +222,15 @@ const UpdateTaskSchema = z.object({
                     }
                 }
             } else if (issue.code === z.ZodIssueCode.invalid_type) {
-                if (issue.received === 'string') {
-                    return { message: 'Notification state must be a string' }
-                } else if (
+                if (
                     issue.received === 'undefined' ||
                     issue.received === 'null'
                 ) {
                     return { message: 'Notification state is required' }
+                } else if (issue.received !== 'string') {
+                    return {
+                        message: 'Notification state must be in string format',
+                    }
                 }
             }
             return { message: 'Internal server error' }
@@ -206,13 +246,13 @@ const UpdateTaskSchema = z.object({
                     }
                 }
             } else if (issue.code === z.ZodIssueCode.invalid_type) {
-                if (issue.received === 'string') {
-                    return { message: 'Completion state must be a string' }
-                } else if (
+                if (
                     issue.received === 'null' ||
                     issue.received === 'undefined'
                 ) {
                     return { message: 'Completion state is required' }
+                } else if (issue.received !== 'string') {
+                    return { message: 'Completion state must be a string' }
                 }
             }
             return { message: 'Internal server error' }
@@ -315,7 +355,7 @@ export const deleteTask = async (
 
             await taskModel.deleteTask(task_id, profile_id)
 
-            res.status(200).json({ result: 'Successful Deletion' })
+            res.status(200).json({ result: 'Successful deletion of task' })
         } else {
             throw new CustomError(
                 401,
