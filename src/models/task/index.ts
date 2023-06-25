@@ -54,7 +54,7 @@ export class TaskModel {
             WHERE task.task_id = $1 AND task.profile_id = $2`
             const selectValues = [task_id, profile_id]
             const selectResult = await client.query(selectQuery, selectValues)
-            console.log(selectResult.rows[0])
+
             await client.query('COMMIT')
             return selectResult.rows[0]
         } catch (err) {

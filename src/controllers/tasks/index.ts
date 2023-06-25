@@ -33,7 +33,19 @@ const CreateTaskSchema = z.object({
         },
     }),
 
-    task_priority_id: z.coerce.number(),
+    task_priority_id: z
+        .string({ required_error: 'Task priority id is required' })
+        .transform((arg, ctx) => {
+            const parsed = parseInt(arg)
+            if (isNaN(parsed)) {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    message: 'Task priority id should be a number',
+                })
+                return z.never()
+            }
+            return parsed
+        }),
     profile_id: z.number(),
 })
 
@@ -68,6 +80,9 @@ export const createTask = async (
             if (!schemaResult.success) {
                 throw schemaResult.error
             }
+
+            console.log(typeof task_priority_id)
+
             const converted_task_priority_id = parseInt(task_priority_id)
             let converted_is_notified
             if (is_notified === 'true') {
@@ -258,7 +273,19 @@ const UpdateTaskSchema = z.object({
             return { message: 'Internal server error' }
         },
     }),
-    task_priority_id: z.coerce.number(),
+    task_priority_id: z
+        .string({ required_error: 'Task priority id is required' })
+        .transform((arg, ctx) => {
+            const parsed = parseInt(arg)
+            if (isNaN(parsed)) {
+                ctx.addIssue({
+                    code: 'custom',
+                    message: 'Task priority id must be a number',
+                })
+                z.never()
+            }
+            return parsed
+        }),
 })
 
 export const updateTask = async (
