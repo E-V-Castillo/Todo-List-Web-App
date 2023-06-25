@@ -1,5 +1,8 @@
 import pool from '../../config/database'
 import { CustomError } from '../../types/errors/CustomError'
+import { ErrorFactory } from '../../utils/ErrorFactory'
+
+const errorFactory = new ErrorFactory()
 
 class ProfileModel {
     // Return a boolean depending on if a user already exists
@@ -15,10 +18,8 @@ class ProfileModel {
             } else {
                 return false
             }
-        } catch (error) {
-            if (error instanceof Error) {
-                throw new CustomError(500, 'Internal Server Error', error)
-            }
+        } catch (err) {
+            throw errorFactory.generateError(err)
         } finally {
             client?.release()
         }
@@ -31,22 +32,18 @@ class ProfileModel {
             // Check if user already exists in the database
             if ((await this.userExists(email)) === false) {
                 client = await pool.connect()
+                await client.query('BEGIN')
                 const query =
                     'INSERT INTO profile (email, username, password) VALUES ($1, $2, $3) RETURNING email, username'
                 const params = [email, username, password]
 
                 try {
                     const result = await client.query(query, params)
+                    await client.query('COMMIT')
                     const rows = result.rows
                     return rows[0]
-                } catch (error) {
-                    if (error instanceof CustomError) {
-                        throw error
-                    } else if (error instanceof Error) {
-                        console.log('here')
-
-                        throw new CustomError(400, 'Invalid Values', error)
-                    }
+                } catch (err) {
+                    throw err
                 }
             } else {
                 throw new CustomError(
@@ -57,58 +54,43 @@ class ProfileModel {
                     )
                 )
             }
-        } catch (error) {
-            if (error instanceof CustomError) {
-                throw error
-            } else if (error instanceof Error) {
-                throw new CustomError(500, 'Internal Server Error', error)
-            }
+        } catch (err) {
+            await client?.query('ROLLBACK')
+            throw err
         } finally {
             client?.release()
         }
     }
     // Read
+
+    //FIGURE OUT IF THESE ARE USELESS
     async getProfileById(id: number) {
-        const client = await pool.connect()
-        const query = `SELECT * from profile WHERE profile_id = $1`
-        const values = [id]
+        let client
         try {
+            client = await pool.connect()
+            const query = `SELECT * from profile WHERE profile_id = $1`
+            const values = [id]
             const { rows } = await client.query(query, values)
             const user: UserInterface = rows[0]
             return user
-        } catch (error) {
-            throw error
+        } catch (err) {
+            throw errorFactory.generateError(err)
         } finally {
-            client.release()
+            client?.release()
         }
     }
 
     async getProfileByEmail(email: string) {
-        const client = await pool.connect()
-        const query = `SELECT * from profile WHERE email = $1`
-        const values = [email]
+        let client
         try {
+            client = await pool.connect()
+            const query = `SELECT * from profile WHERE email = $1`
+            const values = [email]
             const { rows } = await client.query(query, values)
             const user: UserInterface = rows[0]
             return user
         } catch (error) {
             throw error
-        }
-    }
-
-    async getAllProfiles() {
-        let client
-        try {
-            client = await pool.connect()
-            const query = 'SELECT * from profile'
-            const { rows } = await client.query(query)
-            return rows
-        } catch (error) {
-            throw error
-        } finally {
-            if (client) {
-                client.release()
-            }
         }
     }
 }

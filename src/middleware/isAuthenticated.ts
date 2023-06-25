@@ -12,11 +12,11 @@ export const isAuthenticated = async (
         // Create an error object to pass to the error handling middleware
         const error = new CustomError(
             401,
-            'User is not authenticated',
+            'User is not logged in',
             new Error(`User is not authenticated`)
         )
 
         // Pass the error to the error handling middleware
-        return next(error)
+        next(error)
     }
 }

@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from 'express'
 import passport, { AuthenticateCallback } from 'passport'
 import { ErrorFactory } from '../../../utils/ErrorFactory'
 import { CustomError } from '../../../types/errors/CustomError'
+import { ZodError } from 'zod'
 
 const errorFactory = new ErrorFactory()
 
@@ -12,28 +13,26 @@ interface AuthenticationParams {
     status?: number | Array<number | undefined>
 }
 
-export const passportAuthenticate = async (
+export const handleLogin = async (
     req: Request,
     res: Response,
     next: NextFunction
 ) => {
-    try {
-        passport.authenticate(
-            'local',
-            (err: any, user: any, info: any, status: any) => {
+    passport.authenticate(
+        'local',
+        (err: any, user: any, info: any, status: any) => {
+            try {
                 if (err) {
                     // Handle error
-                    next(err) // Call the next middleware with the error
+                    throw errorFactory.generateError(err) // Call the next middleware with the error
                 }
 
                 if (!user) {
                     // Authentication failed
-                    next(
-                        new CustomError(
-                            401,
-                            'Invalid credentials',
-                            new Error('User inputted bad credentials')
-                        )
+                    throw new CustomError(
+                        401,
+                        'Invalid credentials',
+                        new Error('User inputted bad credentials')
                     )
                 } else {
                     // Authentication successful, user object contains authenticated user details
@@ -51,11 +50,9 @@ export const passportAuthenticate = async (
                         next()
                     })
                 }
+            } catch (error) {
+                next(errorFactory.generateError(error))
             }
-        )(req, res, next)
-    } catch (error) {
-        console.log('catching')
-
-        next(errorFactory.generateError(error))
-    }
+        }
+    )(req, res, next)
 }

@@ -2,19 +2,18 @@ import express from 'express'
 import {
     createTask,
     deleteTask,
-    filteredTask,
-    readTasks,
+    readTask,
     updateTask,
 } from '../../controllers/tasks'
 
 const router = express.Router()
 
-router.post('/new', createTask)
+router.post('/', createTask)
 
-router.get('/', filteredTask)
+router.get('/', readTask)
 
-router.delete('/delete/:task_id', deleteTask)
+router.delete('/:task_id', deleteTask)
 
-router.patch('/update/:task_id', updateTask)
+router.patch('/:task_id', updateTask)
 
 export default router

@@ -1,7 +1,10 @@
 import { Client, PoolClient } from 'pg'
 import pool from '../../config/database'
 import { CustomError } from '../../types/errors/CustomError'
-import { doesCategoryExist } from './utils/doesCategoryExist'
+
+import { ErrorFactory } from '../../utils/ErrorFactory'
+
+const errorFactory = new ErrorFactory()
 
 class CategoryModel {
     private async categoryExistsById(
@@ -20,10 +23,8 @@ class CategoryModel {
             } else {
                 return false
             }
-        } catch (error) {
-            if (error instanceof Error) {
-                throw new CustomError(500, 'Internal Server Error', error)
-            }
+        } catch (err) {
+            throw err
         }
     }
 
@@ -37,18 +38,14 @@ class CategoryModel {
                 'SELECT COUNT(*) FROM category WHERE name = $1 AND profile_id = $2'
             const values = [name, profile_id]
             const result = await client.query(query, values)
-            console.log(result.rowCount)
-            console.log(result.rows[0].count)
 
             if (result.rows[0].count >= 1) {
                 return true
             } else {
                 return false
             }
-        } catch (error) {
-            if (error instanceof Error) {
-                throw new CustomError(500, 'Internal Server Error', error)
-            }
+        } catch (err) {
+            throw err
         }
     }
     // Create
@@ -62,6 +59,7 @@ class CategoryModel {
         let client
         try {
             client = await pool.connect()
+            await client.query('BEGIN')
             if (await this.categoryExistsByName(name, profile_id, client)) {
                 throw new CustomError(
                     400,
@@ -74,14 +72,11 @@ class CategoryModel {
             const values = [name, profile_id]
 
             const result = await client.query(query, values)
-            const row = result.rows[0]
-            return row
-        } catch (error) {
-            if (error instanceof CustomError) {
-                throw error
-            } else if (error instanceof Error) {
-                throw new CustomError(500, 'Internal Server Error', error)
-            }
+            await client.query('COMMIT')
+            return result.rows[0]
+        } catch (err) {
+            await client?.query('ROLLBACK')
+            throw err
         } finally {
             client?.release()
         }
@@ -92,12 +87,12 @@ class CategoryModel {
         try {
             client = await pool.connect()
             const query =
-                'SELECT category.name FROM category INNER JOIN profile ON profile.profile_id = category.profile_id WHERE category.profile_id = $1'
+                'SELECT category.name, category.category_id FROM category INNER JOIN profile ON profile.profile_id = category.profile_id WHERE category.profile_id = $1 ORDER BY category_id'
             const values = [profile_id]
             const { rows } = await client.query(query, values)
             return rows
-        } catch (error) {
-            throw new CustomError(500, 'Internal Server Error', error as Error)
+        } catch (err) {
+            throw err
         } finally {
             client?.release()
         }
@@ -112,39 +107,46 @@ class CategoryModel {
         let client
         try {
             client = await pool.connect()
+            await client.query('BEGIN')
 
-            if (
-                await this.categoryExistsById(category_id, profile_id, client)
-            ) {
-                const query =
-                    'UPDATE category SET name = $1 WHERE category_id = $2 AND profile_id = $3 RETURNING name, category_id'
-                const values = [name, category_id, profile_id]
-                const { rows }: { rows: CategoryDto[] } = await client.query(
-                    query,
-                    values
-                )
-                return rows
-            } else {
+            const existsById = await this.categoryExistsById(
+                category_id,
+                profile_id,
+                client
+            )
+            const existsByName = await this.categoryExistsByName(
+                newName,
+                profile_id,
+                client
+            )
+
+            if (!existsById) {
                 throw new CustomError(
-                    403,
-                    'Unauthorized Access',
+                    404,
+                    'Resource not found',
                     new Error(
-                        'User tried to access a category that did not belong to them'
+                        'User tried to access a category that did not belong to them or does not exist'
                     )
                 )
             }
-        } catch (error) {
-            if (error instanceof CustomError) {
-                throw error
-            } else if (error instanceof Error) {
-                throw new CustomError(500, 'Internal Server Error', error)
-            } else {
+            if (existsByName) {
                 throw new CustomError(
-                    500,
-                    'Internal Server Error',
-                    new Error('Unaccounted Error Occurred')
+                    400,
+                    'That name is already in use',
+                    new Error(
+                        'User tried to update a category name with a name already used'
+                    )
                 )
             }
+            const query =
+                'UPDATE category SET name = $1 WHERE category_id = $2 AND profile_id = $3 RETURNING name, category_id'
+            const values = [newName, category_id, profile_id]
+            const rows = await client.query(query, values)
+            await client.query('COMMIT')
+            return rows.rows[0]
+        } catch (err) {
+            await client?.query('ROLLBACK')
+            throw err
         } finally {
             client?.release()
         }
@@ -155,6 +157,7 @@ class CategoryModel {
         let client
         try {
             client = await pool.connect()
+            await client.query('BEGIN')
             if (
                 await this.categoryExistsById(category_id, profile_id, client)
             ) {
@@ -162,27 +165,19 @@ class CategoryModel {
                     'DELETE FROM category WHERE category_id = $1 AND profile_id = $2'
                 const values = [category_id, profile_id]
                 await client.query(query, values)
+                await client.query('COMMIT')
             } else {
                 throw new CustomError(
-                    403,
-                    'Unauthorized Access',
+                    404,
+                    'Resource not found',
                     new Error(
-                        'User tried to access a category that did not belong to them'
+                        'User tried to access a category that did not belong to them or does not exist'
                     )
                 )
             }
-        } catch (error) {
-            if (error instanceof CustomError) {
-                throw error
-            } else if (error instanceof Error) {
-                throw new CustomError(500, 'Internal Server Error', error)
-            } else {
-                throw new CustomError(
-                    500,
-                    'Internal Server Error',
-                    new Error('Unaccounted Error Occurred')
-                )
-            }
+        } catch (err) {
+            await client?.query('ROLLBACK')
+            throw err
         } finally {
             client?.release()
         }

@@ -9,7 +9,8 @@ export const handleServerError = async (
 ) => {
     if (error instanceof CustomError) {
         console.log(error.debugError)
-        res.status(error.statusCode).json({ Error: error.message })
+
+        res.status(error.statusCode).json({ error: error.message })
     } else {
         next(error)
     }

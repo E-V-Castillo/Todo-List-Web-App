@@ -12,9 +12,11 @@ export const handleRuntimeError = async (
         error.errors.forEach((errorMessage) => {
             message.push(errorMessage.message)
         })
-        console.log(message)
 
-        res.status(400).json({ Error: message })
+        console.log(message)
+        console.log(error)
+
+        res.status(400).json({ error: message })
     } else {
         next(error)
     }

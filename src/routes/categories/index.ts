@@ -8,7 +8,7 @@ import {
 
 const router = express.Router()
 
-router.post('/new', createCategory)
+router.post('/', createCategory)
 
 router.get('/', readAllCategories)
 

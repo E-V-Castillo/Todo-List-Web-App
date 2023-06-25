@@ -21,7 +21,7 @@ import { PassportSchema } from './utils/passportZod'
 
 dotenv.config()
 
-const app = express()
+export const app = express()
 
 const pgSessionStore = new (pgSession(session))({
     pool: pool,
@@ -87,19 +87,16 @@ passport.use(
 )
 
 passport.serializeUser((user: any, done) => {
-    console.log('Serialize User')
     done(null, user.profile_id)
 })
 
 passport.deserializeUser(async (id: string, done) => {
-    console.log('Deserialize user')
-
     const userId = parseInt(id)
     try {
         const result = await profileModel.getProfileById(userId)
         done(null, result)
     } catch (error) {
-        done(error)
+        done(error, false)
     }
 })
 
@@ -111,6 +108,8 @@ app.use(handleRuntimeError)
 app.use(handleServerError)
 
 const port = 3000
-app.listen(port, () => {
-    console.log('server started')
-})
+if (process.env.ENVIRONMENT !== 'testing') {
+    app.listen(port, () => {
+        console.log('server started')
+    })
+}
