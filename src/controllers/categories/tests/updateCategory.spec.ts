@@ -150,9 +150,9 @@ describe('Update category fail test', () => {
                 })
                 .set('Cookie', [loginResponse.headers['set-cookie']])
 
-            expect(response.status).toBe(403)
+            expect(response.status).toBe(404)
             expect(response.body).toEqual({
-                error: 'Unauthorized Access',
+                error: 'Resource not found',
             })
         })
         test('Input is empty', async () => {

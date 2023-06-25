@@ -156,7 +156,7 @@ export const deleteCategory = async (
             }
 
             await categoryModel.deleteCategoryWithId(category_id, profile_id)
-            res.status(200).json({ result: 'Deletion successful' })
+            res.status(200).json({ result: 'Successful deletion of category' })
         } else {
             throw new CustomError(
                 401,
