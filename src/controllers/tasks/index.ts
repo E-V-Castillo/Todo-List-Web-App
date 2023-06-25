@@ -9,7 +9,7 @@ import { ErrorFactory } from '../../utils/ErrorFactory'
 const errorFactory = new ErrorFactory()
 
 const CreateTaskSchema = z.object({
-    title: z.string().max(300),
+    title: z.string().max(300).min(1),
     description: z.string().nullish(),
     deadline: z.string().datetime(),
     is_notified: z.enum(['true', 'false'], {
@@ -163,7 +163,7 @@ export const readTask = async (
             }
 
             // req.query only returns undefined, SQL does not have a definition for undefined so we need to change the type into null or as the value that sql can understand like boolean or string
-            let completedValue
+            let completedValue: boolean | null
             if (completed === undefined) {
                 completedValue = null
             } else if (completed === 'true') {
