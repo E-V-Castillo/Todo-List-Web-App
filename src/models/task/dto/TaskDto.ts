@@ -5,4 +5,5 @@ interface TaskDto {
     converted_is_notified: Boolean
     converted_task_priority_id: number
     profile_id: number
+    category_id_array?: Array<number>
 }

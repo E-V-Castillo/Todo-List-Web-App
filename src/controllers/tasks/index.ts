@@ -47,6 +47,7 @@ const CreateTaskSchema = z.object({
             return parsed
         }),
     profile_id: z.number(),
+    category_id_array: z.array(z.number()).optional(),
 })
 
 // interface TaskFilter {
@@ -64,8 +65,14 @@ export const createTask = async (
 ) => {
     // This stuff will come from a payload from my frontend
     try {
-        const { title, description, deadline, is_notified, task_priority_id } =
-            req.body
+        const {
+            title,
+            description,
+            deadline,
+            is_notified,
+            task_priority_id,
+            category_id_array,
+        } = req.body
 
         if (req.user?.profile_id) {
             const profile_id = req.user.profile_id
@@ -76,12 +83,11 @@ export const createTask = async (
                 is_notified,
                 task_priority_id,
                 profile_id,
+                category_id_array,
             })
             if (!schemaResult.success) {
                 throw schemaResult.error
             }
-
-            console.log(typeof task_priority_id)
 
             const converted_task_priority_id = parseInt(task_priority_id)
             let converted_is_notified
@@ -98,6 +104,7 @@ export const createTask = async (
                 converted_is_notified,
                 converted_task_priority_id,
                 profile_id,
+                category_id_array,
             })
             res.status(201).json({ result: result })
         } else {

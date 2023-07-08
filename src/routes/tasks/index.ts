@@ -1,4 +1,4 @@
-import express from 'express'
+import express, { NextFunction, Request, Response } from 'express'
 import {
     createTask,
     deleteTask,
@@ -9,6 +9,15 @@ import {
 const router = express.Router()
 
 router.post('/', createTask)
+
+router.post(
+    '/experiment',
+    (req: Request, res: Response, next: NextFunction) => {
+        const data = req.body
+        console.log(typeof data.array[0])
+        res.end()
+    }
+)
 
 router.get('/', readTask)
 
