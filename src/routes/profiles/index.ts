@@ -1,16 +1,16 @@
-import express from 'express'
+import express from 'express';
 
-import { createUser, userLogin, viewProfile } from '../../controllers/profiles'
-import passport, { AuthenticateCallback } from 'passport'
-import { isAuthenticated } from '../../middleware/isAuthenticated'
-import { handleLogin } from '../../controllers/profiles/utils/handleLogin'
+import { createUser, userLogin, viewProfile } from '../../controllers/profiles';
+import passport, { AuthenticateCallback } from 'passport';
+import { isAuthenticated } from '../../middleware/isAuthenticated';
+import { handleLogin } from '../../controllers/profiles/utils/handleLogin';
 
-const router = express.Router()
+const router = express.Router();
 
-router.post('/register', createUser)
+router.post('/register', createUser);
 
-router.post('/login', handleLogin, userLogin)
+router.post('/login', handleLogin, userLogin);
 
-router.get('/', isAuthenticated, viewProfile)
+router.get('/', isAuthenticated, viewProfile);
 
-export default router
+export default router;
