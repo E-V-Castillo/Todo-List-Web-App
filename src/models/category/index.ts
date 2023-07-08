@@ -3,11 +3,13 @@ import pool from '../../config/database'
 import { CustomError } from '../../types/errors/CustomError'
 
 import { ErrorFactory } from '../../utils/ErrorFactory'
+import categoryExistsByName from './util/categoryExistsByName'
+import categoryExistsById from './util/categoryExistsById'
 
 const errorFactory = new ErrorFactory()
 
 class CategoryModel {
-    private async categoryExistsById(
+    async categoryExistsById(
         category_id: number,
         profile_id: number,
         client: PoolClient
@@ -28,7 +30,7 @@ class CategoryModel {
         }
     }
 
-    private async categoryExistsByName(
+    async categoryExistsByName(
         name: string,
         profile_id: number,
         client: PoolClient
@@ -60,7 +62,7 @@ class CategoryModel {
         try {
             client = await pool.connect()
             await client.query('BEGIN')
-            if (await this.categoryExistsByName(name, profile_id, client)) {
+            if (await categoryExistsByName(name, profile_id, client)) {
                 throw new CustomError(
                     400,
                     `Category with name: ${name} already exists`,
@@ -81,6 +83,7 @@ class CategoryModel {
             client?.release()
         }
     }
+
     // Read
     async getAllCategories(profile_id: number) {
         let client
@@ -109,12 +112,12 @@ class CategoryModel {
             client = await pool.connect()
             await client.query('BEGIN')
 
-            const existsById = await this.categoryExistsById(
+            const existsById = await categoryExistsById(
                 category_id,
                 profile_id,
                 client
             )
-            const existsByName = await this.categoryExistsByName(
+            const existsByName = await categoryExistsByName(
                 newName,
                 profile_id,
                 client
@@ -158,9 +161,7 @@ class CategoryModel {
         try {
             client = await pool.connect()
             await client.query('BEGIN')
-            if (
-                await this.categoryExistsById(category_id, profile_id, client)
-            ) {
+            if (await categoryExistsById(category_id, profile_id, client)) {
                 const query =
                     'DELETE FROM category WHERE category_id = $1 AND profile_id = $2'
                 const values = [category_id, profile_id]
